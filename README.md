@@ -1,0 +1,1 @@
+# Advanced_Mlops_Proect7_Smart_Manufacturing_Machines_Efficiency_Predection
