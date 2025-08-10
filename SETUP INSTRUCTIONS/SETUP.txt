@@ -1,0 +1,101 @@
+-------------------------------------------------------------------  JENKINS SETUP ------------------------------------------------------------
+
+----------------------------------------------------------
+
+docker run -d --name jenkins \
+-p 8080:8080 \
+-p 50000:50000 \
+-v /var/run/docker.sock:/var/run/docker.sock \
+-v $(which docker):/usr/bin/docker \
+-u root \
+-e DOCKER_GID=$(getent group docker | cut -d: -f3) \
+--network minikube \
+jenkins/jenkins:lts
+
+------------------------------------------------------------
+
+
+docker exec -it jenkins bash
+
+apt update -y
+apt install -y python3
+python3 --version
+ln -s /usr/bin/python3 /usr/bin/python
+python --version
+apt install -y python3-pip
+apt install -y python3-venv
+exit
+
+
+---------------------------------------------------------------
+
+----------------------------------------------------------------------- JENKINSFILE CODE ---------------------------------------------------------------------
+
+pipeline {
+    agent any
+    stages {
+        stage('Checkout Github') {
+            steps {
+                echo 'Checking out code from GitHub...'
+		checkout scmGit(branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[credentialsId: 'github-token', url: 'https://github.com/data-guru0/GITOPS-PROJECT-9.git']])
+		    }
+        }        
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+            }
+        }
+        stage('Push Image to DockerHub') {
+            steps {
+                echo 'Pushing Docker image to DockerHub...'
+            }
+        }
+        stage('Install Kubectl & ArgoCD CLI') {
+            steps {
+                echo 'Installing Kubectl and ArgoCD CLI...'
+            }
+        }
+        stage('Apply Kubernetes & Sync App with ArgoCD') {
+            steps {
+                echo 'Applying Kubernetes and syncing with ArgoCD...'
+            }
+        }
+    }
+}
+
+
+
+------------------------------------------------------------------------- ARGOCD Configurations ----------------------------------------------------------------------
+
+
+
+--------------------------------------------------
+
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+--------------------------------------------------
+
+kubectl port-forward --address 0.0.0.0 service/argocd-server 30751:80 -n argocd 
+
+-------------------------------------------------
+
+kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+---------------------------------------------------
+
+echo 'installing Kubectl & ArgoCD cli...'
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+mv kubectl /usr/local/bin/kubectl
+curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+chmod +x /usr/local/bin/argocd
+
+---------------------------------------------------------------------------
+
+
+sh '''
+argocd login 34.72.5.170:31704 --username admin --password $(kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d) --insecure
+'''
+
+--------------------------------------------------
+

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width , initial-scale=1.0">
+        <link rel="stylesheet" href="static/style.css">
+        <title>Smart Manufacturing Machines Efficiency Prediction</title> 
+    </head>
+
+    <body>
+        <h1>Smart Manufacturing Machines Efficiency Prediction</h1>
+        <form method="post">
+            {% for feature in features %}
+                <label for="{{ feature }}"> {{ feature }} :</label>
+                <input type="text" name="{{ feature }}" required><br>
+            {% endfor %}
+
+            <button type="submit">PREDICT</button>
+        </form>
+
+        {% if prediction %}
+            <h2>Prediction : {{ prediction }}</h2>
+        {% endif %}
+    </body>
+</html>
